@@ -14,6 +14,13 @@ SOURCES += genericorientationsensor.cpp\
            genericalssensor.cpp
 DEFINES += QTSENSORS_GENERICORIENTATIONSENSOR QTSENSORS_GENERICALSSENSOR
 
+linux:!android {
+   DEFINES += QTSENSORS_GENERICCOMPASS
+   HEADERS += genericcompass.h
+   SOURCES += genericcompass.cpp
+   LIBS += -lrt
+}
+
 !android {
     HEADERS += genericrotationsensor.h
 
