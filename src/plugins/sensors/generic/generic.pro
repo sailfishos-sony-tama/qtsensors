@@ -5,10 +5,10 @@ PLUGIN_TYPE = sensors
 PLUGIN_CLASS_NAME = genericSensorPlugin
 load(qt_plugin)
 
-HEADERS += generictiltsensor.h
+SOURCES += main.cpp
 
-SOURCES += main.cpp\
-           generictiltsensor.cpp
+HEADERS += generictiltsensor.h
+SOURCES += generictiltsensor.cpp
 DEFINES += QTSENSORS_GENERICTILTSENSOR
 
 !blackberry {
@@ -20,11 +20,16 @@ DEFINES += QTSENSORS_GENERICTILTSENSOR
     DEFINES += QTSENSORS_GENERICORIENTATIONSENSOR QTSENSORS_GENERICALSSENSOR
 }
 
+linux:!android {
+   DEFINES += QTSENSORS_GENERICCOMPASS
+   HEADERS += genericcompass.h
+   SOURCES += genericcompass.cpp
+   LIBS += -lrt
+}
+
 !blackberry:!android {
     HEADERS += genericrotationsensor.h
-
     SOURCES += genericrotationsensor.cpp
-
     DEFINES += QTSENSORS_GENERICROTATIONSENSOR
 }
 

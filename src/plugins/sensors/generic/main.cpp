@@ -51,6 +51,9 @@
 #ifdef QTSENSORS_GENERICTILTSENSOR
 #include "generictiltsensor.h"
 #endif
+#ifdef QTSENSORS_GENERICCOMPASS
+#include "genericcompass.h"
+#endif
 #include <qsensorplugin.h>
 #include <qsensorbackend.h>
 #include <qsensormanager.h>
@@ -63,12 +66,12 @@ class genericSensorPlugin : public QObject, public QSensorPluginInterface, publi
     Q_PLUGIN_METADATA(IID "com.qt-project.Qt.QSensorPluginInterface/1.0" FILE "plugin.json")
     Q_INTERFACES(QSensorPluginInterface QSensorChangesInterface)
 public:
-    void registerSensors()
+    void registerSensors() Q_DECL_OVERRIDE
     {
         // Nothing to register here
     }
 
-    void sensorsChanged()
+    void sensorsChanged() Q_DECL_OVERRIDE
     {
         if (!QSensor::defaultSensorForType(QAccelerometer::type).isEmpty()) {
             // There is an accelerometer available. Register the backends
@@ -88,6 +91,14 @@ public:
             if (!QSensorManager::isBackendRegistered(QTiltSensor::type, GenericTiltSensor::id))
                 QSensorManager::registerBackend(QTiltSensor::type, GenericTiltSensor::id, this);
 #endif
+#ifdef QTSENSORS_GENERICCOMPASS
+            if (!QSensor::defaultSensorForType(QMagnetometer::type).isEmpty()
+                    && !QSensor::defaultSensorForType(QGyroscope::type).isEmpty()) {
+                if (!QSensorManager::isBackendRegistered(QCompass::type, GenericCompass::id)) {
+                    QSensorManager::registerBackend(QCompass::type, GenericCompass::id, this);
+                }
+            }
+#endif
         } else {
 #ifdef QTSENSORS_GENERICORIENTATIONSENSOR
             if (QSensorManager::isBackendRegistered(QOrientationSensor::type, genericorientationsensor::id))
@@ -105,10 +116,14 @@ public:
             if (QSensorManager::isBackendRegistered(QTiltSensor::type, GenericTiltSensor::id))
                 QSensorManager::unregisterBackend(QTiltSensor::type, GenericTiltSensor::id);
 #endif
+#ifdef QTSENSORS_GENERICCOMPASS
+            if (QSensorManager::isBackendRegistered(QCompass::type, GenericCompass::id))
+                QSensorManager::unregisterBackend(QCompass::type, GenericCompass::id);
+#endif
         }
     }
 
-    QSensorBackend *createBackend(QSensor *sensor)
+    QSensorBackend *createBackend(QSensor *sensor) Q_DECL_OVERRIDE
     {
 #ifdef QTSENSORS_GENERICORIENTATIONSENSOR
         if (sensor->identifier() == genericorientationsensor::id)
@@ -126,7 +141,10 @@ public:
         if (sensor->identifier() == GenericTiltSensor::id)
             return new GenericTiltSensor(sensor);
 #endif
-
+#ifdef QTSENSORS_GENERICCOMPASS
+        if (sensor->identifier() == GenericCompass::id)
+            return new GenericCompass(sensor);
+#endif
         return 0;
     }
 };
