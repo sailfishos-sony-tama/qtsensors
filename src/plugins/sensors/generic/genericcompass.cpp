@@ -136,8 +136,9 @@ void GenericCompass::checkValues()
         GenericCompass::getOrientation(R, 9, _orientation);
         calculateFusedOrientation();
         qreal newAzimuth = _fusedOrientation[0] * RADIANS_TO_DEGREES;
+        newAzimuth += (newAzimuth < 0) ? 360 : 0; // azimuth is in 0..360 degrees
 
-        if (_compassReading.azimuth() != newAzimuth) { // TODO: run thru collection of QCompassFilter
+        if (!qFuzzyCompare(_compassReading.azimuth(), newAzimuth)) { // TODO: run thru collection of QCompassFilter
             _compassReading.setAzimuth(newAzimuth);
             _compassReading.setTimestamp(produceTimestamp());
             emit newReadingAvailable();
