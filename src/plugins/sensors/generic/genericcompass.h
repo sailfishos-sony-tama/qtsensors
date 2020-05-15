@@ -51,7 +51,7 @@
 #include <QGyroscope>
 #include <qsensorbackend.h>
 
-#define FILTER_COEFFICIENT 0.98f
+#define FILTER_COEFFICIENT 0.75f
 #define EPSILON 0.000000001f
 #define NS2S (1.0f / 1000000000.0f)
 #define PI 3.1415926
