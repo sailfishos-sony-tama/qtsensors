@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
 **
 ** Copyright (C) 2014 Giovanni Romano <giovanni.romano.76@gmail.com>
 ** Copyright (C) 2014 Lorn Potter <lorn.potter@jollamobile.com>
@@ -76,6 +76,7 @@ private:
     QMagnetometer *_magnetmeter;
     QGyroscope *_gyroscope;
     mutable QCompassReading _compassReading;
+    bool _gyroscopeEnabled;
 
     float _gravity[3];
     float _gyro[3];
