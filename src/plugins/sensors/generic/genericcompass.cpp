@@ -82,11 +82,12 @@ GenericCompass::GenericCompass(QSensor *sensor)
 
     _gravitySensor = new QAccelerometer(this);
     _magnetmeter = new QMagnetometer(this);
+    _magnetmeter->setReturnGeoValues(true);
     _gyroscope = new QGyroscope(this);
 
     _gravitySensor->connectToBackend();
     _magnetmeter->connectToBackend();
-    _gyroscope->connectToBackend();
+    _gyroscopeEnabled = _gyroscope->connectToBackend();
 
     setReading<QCompassReading>(&_compassReading);
     setDataRates(_gravitySensor);
@@ -95,8 +96,10 @@ GenericCompass::GenericCompass(QSensor *sensor)
     connect(_gravitySensor, SIGNAL(sensorError(int)), this, SIGNAL(sensorError(int)));
     connect(_magnetmeter, SIGNAL(readingChanged()), this, SLOT(onMagnetometerChanged()));
     connect(_magnetmeter, SIGNAL(sensorError(int)), this, SIGNAL(sensorError(int)));
-    connect(_gyroscope, SIGNAL(readingChanged()), this, SLOT(onGyroscopeChanged()));
-    connect(_gyroscope, SIGNAL(sensorError(int)), this, SIGNAL(sensorError(int)));
+    if (_gyroscopeEnabled) {
+        connect(_gyroscope, SIGNAL(readingChanged()), this, SLOT(onGyroscopeChanged()));
+        connect(_gyroscope, SIGNAL(sensorError(int)), this, SIGNAL(sensorError(int)));
+    }
 }
 
 GenericCompass::~GenericCompass()
@@ -134,10 +137,13 @@ void GenericCompass::checkValues()
 
     if (GenericCompass::getRotationMatrix(R, 9, I, 9, _gravity, _geomagnetic)) {
         GenericCompass::getOrientation(R, 9, _orientation);
-        calculateFusedOrientation();
+        if (_gyroscopeEnabled) {
+            calculateFusedOrientation();
+        } else {
+            _fusedOrientation[0] = _orientation[0];
+        }
         qreal newAzimuth = _fusedOrientation[0] * RADIANS_TO_DEGREES;
         newAzimuth += (newAzimuth < 0) ? 360 : 0; // azimuth is in 0..360 degrees
-
         if (!qFuzzyCompare(_compassReading.azimuth(), newAzimuth)) { // TODO: run thru collection of QCompassFilter
             _compassReading.setAzimuth(newAzimuth);
             _compassReading.setTimestamp(produceTimestamp());
@@ -154,19 +160,21 @@ void GenericCompass::start()
     _magnetmeter->setDataRate(sensor()->dataRate());
     _magnetmeter->setAlwaysOn(sensor()->isAlwaysOn());
 
-    _gyroscope->setDataRate(sensor()->dataRate());
-    _gyroscope->setAlwaysOn(sensor()->isAlwaysOn());
+    if (_gyroscopeEnabled) {
+        _gyroscope->setDataRate(sensor()->dataRate());
+        _gyroscope->setAlwaysOn(sensor()->isAlwaysOn());
+    }
 
     _gravitySensor->start();
     _magnetmeter->start();
-    _gyroscope->start();
+    if (_gyroscopeEnabled) _gyroscope->start();
 }
 
 void GenericCompass::stop()
 {
     _gravitySensor->stop();
     _magnetmeter->stop();
-    _gyroscope->stop();
+    if (_gyroscopeEnabled) _gyroscope->stop();
 }
 
 void GenericCompass::gyroFunction(QGyroscopeReading *event)
@@ -221,10 +229,10 @@ void GenericCompass::calculateFusedOrientation()
 {
     static float oneMinusCoeff = 1.0f - FILTER_COEFFICIENT;
     /*
-     * Fix for 179° <--> -179° transition problem:
+     * Fix for 179Â° <--> -179Â° transition problem:
      * Check whether one of the two orientation angles (gyro or accMag) is negative while the other one is positive.
-     * If so, add 360° (2 * PI) to the negative value, perform the sensor fusion, and remove the 360° from the result
-     * if it is greater than 180°. This stabilizes the output in positive-to-negative-transition cases.
+     * If so, add 360Â° (2 * PI) to the negative value, perform the sensor fusion, and remove the 360Â° from the result
+     * if it is greater than 180Â°. This stabilizes the output in positive-to-negative-transition cases.
     */
     // azimuth
     if (_gyroOrientation[0] < -0.5 * PI && _orientation[0] > 0.0) {

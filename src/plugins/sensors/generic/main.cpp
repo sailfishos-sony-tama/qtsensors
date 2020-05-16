@@ -80,8 +80,7 @@ public:
                 QSensorManager::registerBackend(QTiltSensor::type, GenericTiltSensor::id, this);
 #endif
 #ifdef QTSENSORS_GENERICCOMPASS
-            if (!QSensor::defaultSensorForType(QMagnetometer::type).isEmpty()
-                    && !QSensor::defaultSensorForType(QGyroscope::type).isEmpty()) {
+            if (!QSensor::defaultSensorForType(QMagnetometer::type).isEmpty()) {
                 if (!QSensorManager::isBackendRegistered(QCompass::type, GenericCompass::id)) {
                     QSensorManager::registerBackend(QCompass::type, GenericCompass::id, this);
                 }
